@@ -2285,6 +2285,10 @@ MemoryDepChecker::getDependenceDistanceStrideAndSize(
   std::optional<uint64_t> CommonStride;
   if (StrideAScaled == StrideBScaled)
     CommonStride = StrideAScaled;
+  // The zero-distance mixed-width case in isDependent relies on each access
+  // fitting within CommonStride.
+  assert((!CommonStride || *CommonStride >= std::max(ASz, BSz)) &&
+         "Common stride must cover both accesses");
 
   // TODO: Historically, we didn't retry with runtime checks when (unscaled)
   // strides were different but there is no inherent reason to.
@@ -2380,14 +2384,9 @@ MemoryDepChecker::isDependent(const MemAccessInfo &A, unsigned AIdx,
       if (HasSameSize || CommonStride) {
         // Equal-sized accesses to the same location are forward.
         //
-        // Invariant from getDependenceDistanceStrideAndSize: both accesses have
-        // non-zero strides in the same direction, each a multiple of its type's
-        // allocation size in bytes.
-        //
-        // When CommonStride is present, its value is therefore at least as
-        // large as either access size. With equal starting addresses, different
-        // iterations cannot overlap, leaving only a loop-independent forward
-        // dependence, even for mixed sizes.
+        // For mixed sizes, CommonStride is asserted to cover both accesses when
+        // computed in getDependenceDistanceStrideAndSize, so different
+        // iterations cannot overlap.
         return Dependence::Forward;
       }
       LLVM_DEBUG(dbgs() << "LAA: possibly zero dependence difference but "
