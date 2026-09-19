@@ -3366,6 +3366,52 @@ TEST_F(FormatTest, FormatsLabels) {
                Style);
 }
 
+TEST_F(FormatTest, BreakAfterOpenBracketIf) {
+  auto Style = getLLVMStyle();
+  Style.PackArguments.BinPack = FormatStyle::BPAS_OnePerLine;
+  Style.BreakAfterOpenBracketIf = true;
+  Style.BreakBeforeCloseBracketIf = true;
+
+  for (unsigned Width : {3, 4, 5, 8}) {
+    SCOPED_TRACE(Width);
+    Style.ContinuationIndentWidth = Width;
+    const std::string Indent(Style.IndentWidth + Width, ' ');
+    const std::string ArgumentIndent = Indent + "       ";
+    verifyFormat("int main() {\n"
+                 "  if (\n" +
+                     Indent + "printf(\"%s %s %s %s %s %s\",\n" +
+                     ArgumentIndent + "\"foobar\",\n" + ArgumentIndent +
+                     "\"foobar\",\n" + ArgumentIndent + "\"foobar\",\n" +
+                     ArgumentIndent + "\"foobar\",\n" + ArgumentIndent +
+                     "\"foobar\",\n" + ArgumentIndent +
+                     "\"foobar\") < 0\n"
+                     "  ) {\n"
+                     "    return 1;\n"
+                     "  }\n"
+                     "}",
+                 Style);
+    verifyFormat("if (foo()) {\n"
+                 "  bar();\n"
+                 "}",
+                 Style);
+  }
+
+  Style.ContinuationIndentWidth = 4;
+  Style.BreakAfterOpenBracketIf = false;
+  verifyFormat("int main() {\n"
+               "  if (printf(\"%s %s %s %s %s %s\",\n"
+               "             \"foobar\",\n"
+               "             \"foobar\",\n"
+               "             \"foobar\",\n"
+               "             \"foobar\",\n"
+               "             \"foobar\",\n"
+               "             \"foobar\") < 0) {\n"
+               "    return 1;\n"
+               "  }\n"
+               "}",
+               Style);
+}
+
 TEST_F(FormatTest, MultiLineControlStatements) {
   FormatStyle Style = getLLVMStyleWithColumns(20);
   Style.BreakBeforeBraces = FormatStyle::BS_Custom;

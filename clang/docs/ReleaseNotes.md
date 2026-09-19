@@ -812,6 +812,9 @@ features cannot lower the translation-unit ABI level;
 
 ### clang-format
 
+- Fix `BreakAfterOpenBracketIf` being ignored when breaking after the opening
+  parenthesis does not reduce the indentation column.
+
 - Add `SpacesInBlockComments` option to control spacing after `/*` and
   before `*/` in ordinary block comments.
 - Add `AfterRequiresExpression` sub-option of `BraceWrapping` to wrap the
